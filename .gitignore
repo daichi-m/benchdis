@@ -1,0 +1,6 @@
+*out
+*log
+*pprof
+trace_data
+redis-benchmark
+.vscode
