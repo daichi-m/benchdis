@@ -87,8 +87,9 @@ func main() {
 		wg.Wait()
 		bench.End()
 		Infof("======== %s ========", strings.ToUpper(test))
-		Outf("Test: %s %s\n", strings.ToUpper(test), bench.String())
+		bench.Record(test)
 	}
+	ReportResults()
 	destroyGlobals()
 	Infof("\n\nAll Done")
 }

@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"strings"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -17,6 +16,21 @@ type Benchmark struct {
 	end       time.Time
 	latencies [][]float64
 }
+
+// BenchmarkResult is the result for one benchmark test
+type BenchmarkResult struct {
+	Test          string  `json:"test"`
+	QPS           float64 `json:"qps,omitempty"`
+	MinLatency    float64 `json:"min,omitempty"`
+	AvgLatency    float64 `json:"avg,omitempty"`
+	MedianLatency float64 `json:"median,omitempty"`
+	P75Latency    float64 `json:"p75,omitempty"`
+	P90Latency    float64 `json:"p90,omitempty"`
+	P99Latency    float64 `json:"p99,omitempty"`
+	MaxLatency    float64 `json:"max,omitempty"`
+}
+
+var benchResults map[string]BenchmarkResult
 
 // GetBenchmark gets the Benchmark object associated with a test
 func GetBenchmark(test string) *Benchmark {
@@ -72,10 +86,11 @@ func (b *Benchmark) End() {
 	b.end = time.Now()
 }
 
-// String converts the benchmark into a nice string object
-func (b *Benchmark) String() string {
+// Record converts the benchmark into a nice string object
+func (b *Benchmark) Record(test string) {
 
-	sb := strings.Builder{}
+	var br BenchmarkResult
+	br.Test = test
 	if GlobalConfig.QPS {
 		reqTot := 0
 		for _, r := range b.requests {
@@ -83,7 +98,7 @@ func (b *Benchmark) String() string {
 		}
 		tm := b.end.Sub(b.start).Seconds()
 		qps := float64(reqTot) / tm
-		sb.WriteString(fmt.Sprintf("QPS: %f\t", qps))
+		br.QPS = qps
 	}
 
 	if GlobalConfig.Latency {
@@ -94,18 +109,25 @@ func (b *Benchmark) String() string {
 			// Debugf("Latencies list now: %v", latencies)
 		}
 		rawLatencies := stats.LoadRawData(latencies)
-		min, _ := rawLatencies.Min()
-		mean, _ := rawLatencies.Mean()
-		median, _ := rawLatencies.Median()
-		p90, _ := rawLatencies.Percentile(90)
-		p99, _ := rawLatencies.Percentile(99)
-		max, _ := rawLatencies.Max()
-
-		sb.WriteString(fmt.Sprintf("\tMin: %f \t Mean: %f \t Median: %f \t"+
-			"P90: %f \t P99: %f \t Max: %f",
-			min, mean, median, p90, p99, max))
+		br.MinLatency, _ = rawLatencies.Min()
+		br.AvgLatency, _ = rawLatencies.Mean()
+		br.MedianLatency, _ = rawLatencies.Median()
+		br.P90Latency, _ = rawLatencies.Percentile(90)
+		br.P99Latency, _ = rawLatencies.Percentile(99)
+		br.MaxLatency, _ = rawLatencies.Max()
 	}
-	sb.WriteString(fmt.Sprintf("\tTotal Time: %v", b.end.Sub(b.start)))
+	if benchResults == nil {
+		benchResults = make(map[string]BenchmarkResult)
+	}
+	benchResults[test] = br
+}
 
-	return sb.String()
+// ReportResults reports the benchmark result to stdout
+func ReportResults() {
+	res := make([]BenchmarkResult, 0, len(benchResults))
+	for _, br := range benchResults {
+		res = append(res, br)
+	}
+	j, _ := json.MarshalIndent(res, "", "  ")
+	Outf("%s", string(j))
 }

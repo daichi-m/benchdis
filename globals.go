@@ -26,7 +26,6 @@ type Config struct {
 	Tests    []string
 	Quiet    bool
 	Debug    bool
-	Idle     bool
 	QPS      bool
 	Latency  bool
 	CPUProf  bool
@@ -60,7 +59,7 @@ func (c Config) String() string {
 	}
 	str := fmt.Sprintf(prompt,
 		c.Host, c.Port, auth(), c.Database, c.Timeout, c.NClients, c.NPool, c.NReqs, c.ReqSize,
-		c.Tests, c.Quiet, c.Debug, c.Idle, c.QPS, c.Latency,
+		c.Tests, c.Quiet, c.Debug, c.QPS, c.Latency,
 	)
 	return str
 }
@@ -109,7 +108,7 @@ func initConfig() Config {
 	debugptr := flag.Bool("debug", false, "Debug mode")
 	qpsptr := flag.Bool("qps", true, "Track and report QPS")
 	latencyptr := flag.Bool("latency", true, "Track and report latency")
-	idleptr := flag.BoolP("idle", "I", false, "Idle mode, just create connection and do nothing")
+
 	cpuprofptr := flag.Bool("cpu", false, "Do CPU profile")
 	memprofptr := flag.Bool("mem", false, "Do Memory profile")
 
@@ -134,10 +133,10 @@ func initConfig() Config {
 		Debug:    *debugptr,
 		QPS:      *qpsptr,
 		Latency:  *latencyptr,
-		Idle:     *idleptr,
 		CPUProf:  *cpuprofptr,
 		MemProf:  *memprofptr,
 	}
+
 	_, err := validateConfig(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
