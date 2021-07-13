@@ -2,5 +2,5 @@
 *log
 *pprof
 trace_data
-redis-benchmark
+benchdis
 .vscode
