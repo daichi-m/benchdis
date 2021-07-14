@@ -69,7 +69,7 @@ func main() {
 		bnchMk.EndBenchmark()
 		bnchMk.Record(test)
 		pb.Finish()
-		logger.Infof("")
+		logger.Infof(" Error: %0.2f%%", (float64(bnchMk.errorCount)/float64(config.NReqs))*100)
 	}
 
 	bms := make([]*Benchmark, 0, len(benchmarks))

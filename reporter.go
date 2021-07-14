@@ -42,7 +42,7 @@ var _ Reporter = CsvReporter{}
 
 func (cr CsvReporter) ReportResults(brs []*BenchmarkResult) string {
 
-	buffer := bytes.NewBuffer(make([]byte, 0))
+	buffer := bytes.NewBuffer(make([]byte, 100*1024))
 	csvWr := csv.NewWriter(buffer)
 	header := []string{"Test", "QPS", "Min", "Avg", "Median", "P75", "P90", "P99", "Max"}
 	csvWr.Write(header)
@@ -60,6 +60,7 @@ func (cr CsvReporter) ReportResults(brs []*BenchmarkResult) string {
 		data = append(data, cr.valueToString(br.MaxLatency))
 		csvWr.Write(data)
 	}
+	csvWr.Flush()
 	return string(buffer.Bytes())
 }
 

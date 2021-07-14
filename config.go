@@ -148,9 +148,9 @@ func (conf Config) String() string {
 	Number of requests for each client: %v,
 	Data size of request: %v,
 	Tests to conduct: %v,
+	Output format: %v,
 	Quiet Mode: %v,
 	Debug Mode: %v,
-	Idle Mode: %v,
 	Calculate throughput (QPS): %v,
 	Calculate latency: %v
 `
@@ -163,7 +163,8 @@ func (conf Config) String() string {
 	}
 	str := fmt.Sprintf(prompt,
 		conf.Host, conf.Port, auth(), conf.Database, conf.Timeout, conf.NClients, conf.NPool,
-		conf.NReqs, conf.ReqSize, conf.Tests, conf.Quiet, conf.Debug, conf.QPS, conf.Latency)
+		conf.NReqs, conf.ReqSize, conf.Tests, conf.OutputFormat, conf.Quiet, conf.Debug,
+		conf.QPS, conf.Latency)
 	return str
 }
 

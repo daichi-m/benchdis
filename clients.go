@@ -75,14 +75,14 @@ func (c *Client) SendReqs(bench *Benchmark, reqIdChan <-chan int, wg *sync.WaitG
 		for i := range args {
 			intfArgs[i] = args[i]
 		}
-		ret := bench.Mark(c.id, reqId, func() []interface{} {
+		_, err = bench.Mark(c.id, reqId, func() (interface{}, error) {
 			res, err := conn.Do(cmd, intfArgs...)
-			return []interface{}{res, err}
+			return res, err
 		})
 
-		if ret[1] != nil {
-			err = ret[1].(error)
+		if err != nil {
 			logger.Debugf("Could not send request #%d to redis due to %s", reqId, err.Error())
+
 		}
 		if reqId%100 == 0 {
 			logger.Debugf("Client #%d has sent %d requests", c.id, reqId)

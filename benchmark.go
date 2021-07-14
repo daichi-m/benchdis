@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/montanaflynn/stats"
@@ -8,15 +9,15 @@ import (
 
 // BenchmarkResult is the result for one benchmark test
 type BenchmarkResult struct {
-	BenchTestName string  `json:"test", yaml:"test"`
-	QPS           float64 `json:"qps,omitempty", yaml:"qps,omitempty"`
-	MinLatency    float64 `json:"min,omitempty", yaml:"min,omitempty"`
-	AvgLatency    float64 `json:"avg,omitempty", yaml:"avg,omitempty"`
-	MedianLatency float64 `json:"median,omitempty", yaml:"median,omitempty"`
-	P75Latency    float64 `json:"p75,omitempty", yaml:"p75,omitempty"`
-	P90Latency    float64 `json:"p90,omitempty",yaml:"p90,omitempty"`
-	P99Latency    float64 `json:"p99,omitempty", yaml:"p99,omitempty"`
-	MaxLatency    float64 `json:"max,omitempty", yaml:"max,omitempty"`
+	BenchTestName string  `json:"test" yaml:"test"`
+	QPS           float64 `json:"qps,omitempty" yaml:"qps,omitempty"`
+	MinLatency    float64 `json:"min,omitempty" yaml:"min,omitempty"`
+	AvgLatency    float64 `json:"avg,omitempty" yaml:"avg,omitempty"`
+	MedianLatency float64 `json:"median,omitempty" yaml:"median,omitempty"`
+	P75Latency    float64 `json:"p75,omitempty" yaml:"p75,omitempty"`
+	P90Latency    float64 `json:"p90,omitempty" yaml:"p90,omitempty"`
+	P99Latency    float64 `json:"p99,omitempty" yaml:"p99,omitempty"`
+	MaxLatency    float64 `json:"max,omitempty" yaml:"max,omitempty"`
 }
 
 // Benchmark encapsulates all the benchmarking params
@@ -28,6 +29,7 @@ type Benchmark struct {
 	End           time.Time
 	requests      []int
 	latencies     [][]float64
+	errorCount    int32
 }
 
 // var Benchmarks map[string]*Benchmark
@@ -62,9 +64,14 @@ func InitializeBenchmarks(conf *Config, tests []string) map[string]*Benchmark {
 // }
 
 // Mark an execution of a function for benchmarking
-func (b *Benchmark) Mark(clientId, reqId int, fn func() []interface{}) []interface{} {
+func (b *Benchmark) Mark(clientId, reqId int, fn func() (interface{}, error)) (interface{}, error) {
 	st := time.Now()
-	ret := fn()
+	res, err := fn()
+	if err != nil {
+		logger.Debugf("Error in benchmarking: %s", err.Error())
+		atomic.AddInt32(&b.errorCount, 1)
+		return nil, err
+	}
 	end := time.Now()
 	latency := float64(end.Sub(st).Microseconds()) / float64(1000)
 
@@ -74,7 +81,7 @@ func (b *Benchmark) Mark(clientId, reqId int, fn func() []interface{}) []interfa
 	if b.Config.QPS {
 		b.markQPS(clientId)
 	}
-	return ret
+	return res, err
 }
 
 func (b *Benchmark) markLatency(clientId, reqId int, latency float64) {
