@@ -43,7 +43,7 @@ func main() {
 	enableCPUProfile(config)
 
 	for tc, test := range config.Tests {
-		// reset()
+
 		wg := new(sync.WaitGroup)
 		desc := fmt.Sprintf("[%d/%d] Running cases for %s", (tc + 1), len(config.Tests),
 			strings.ToUpper(test))
@@ -54,8 +54,6 @@ func main() {
 			progressbar.OptionSetRenderBlankState(true),
 			progressbar.OptionSetDescription(desc),
 			progressbar.OptionSetWidth(50))
-		//logger.Infof("\n\n")
-		// logger.Infof("======== %s ========", strings.ToUpper(test))
 		bnchMk := benchmarks[test]
 		bnchMk.StartBenchmark()
 		go generateReqIds(config.NReqs, config.NClients, reqIdChan)

@@ -42,22 +42,23 @@ type Client struct {
 func (c *Client) SendReqs(bench *Benchmark, reqIdChan <-chan int, wg *sync.WaitGroup,
 	pb *progressbar.ProgressBar) {
 
-	logger.Debugf("Running test %s for Client %d", bench.BenchTestName, c.id)
+	logger.Debugf("Running test %s for Client #%d", bench.BenchTestName, c.id)
 	conn := c.Pool.Get()
 	defer conn.Close()
 	defer wg.Done()
 
 	logger.Debugf("Client #%d up and runnnig", c.id)
+outer:
 	for {
 		var reqId int
 		select {
 		case reqId = <-reqIdChan:
 		case <-shutdownChan:
-			// close clients
-			break
+			logger.Debugf("Shutdown received for client #%d", c.id)
+			break outer
 		}
 		if reqId == -1 {
-			break
+			break outer
 		}
 		logger.Debugf("Received request: %d in client #%d", reqId, c.id)
 
